@@ -1,0 +1,25 @@
+{
+  "name": "epms",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ESPRIT Procedure Management System (EPMS) - Enterprise desktop application for managing institutional procedures",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "postinstall": "npm run build --workspace=@epms/shared",
+    "dev": "concurrently -n server,desktop -c blue,magenta \"npm:dev:server\" \"npm:dev:desktop\"",
+    "dev:server": "npm run dev --workspace=@epms/server",
+    "dev:desktop": "npm run dev --workspace=@epms/desktop",
+    "build:server": "npm run build --workspace=@epms/server",
+    "build:desktop": "npm run build --workspace=@epms/desktop",
+    "seed": "npm run seed --workspace=@epms/server"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
