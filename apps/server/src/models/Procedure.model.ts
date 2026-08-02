@@ -1,5 +1,5 @@
 import { Schema, model, Types } from "mongoose";
-import { ProcedureStatus, ProcedureStep } from "@epms/shared";
+import { ProcedureAudience, ProcedureStatus, ProcedureStep } from "@epms/shared";
 
 export interface ProcedureDocument {
   _id: Types.ObjectId;
@@ -15,6 +15,21 @@ export interface ProcedureDocument {
   lastUpdate: Date;
   versionNumber: string;
   status: ProcedureStatus;
+  targetAudience: ProcedureAudience[];
+  submittedAt?: Date;
+  submittedBy?: Types.ObjectId;
+  approvedAt?: Date;
+  approvedBy?: Types.ObjectId;
+  rejectedAt?: Date;
+  rejectedBy?: Types.ObjectId;
+  publishedAt?: Date;
+  publishedBy?: Types.ObjectId;
+  startDate?: Date;
+  endDate?: Date;
+  deadline?: Date;
+  showInCalendar: boolean;
+  eventType?: string;
+  lastValidationComment?: string;
   viewCount: number;
   createdBy: Types.ObjectId;
   createdAt: Date;
@@ -47,6 +62,28 @@ const procedureSchema = new Schema<ProcedureDocument>(
       enum: Object.values(ProcedureStatus),
       default: ProcedureStatus.DRAFT,
     },
+    targetAudience: {
+      type: [{ type: String, enum: Object.values(ProcedureAudience) }],
+      default: [ProcedureAudience.STUDENT, ProcedureAudience.EMPLOYEE],
+      validate: {
+        validator: (audiences: ProcedureAudience[]) => Array.isArray(audiences) && audiences.length > 0,
+        message: "A procedure must target at least one audience",
+      },
+    },
+    submittedAt: { type: Date },
+    submittedBy: { type: Schema.Types.ObjectId, ref: "User" },
+    approvedAt: { type: Date },
+    approvedBy: { type: Schema.Types.ObjectId, ref: "User" },
+    rejectedAt: { type: Date },
+    rejectedBy: { type: Schema.Types.ObjectId, ref: "User" },
+    publishedAt: { type: Date },
+    publishedBy: { type: Schema.Types.ObjectId, ref: "User" },
+    startDate: { type: Date },
+    endDate: { type: Date },
+    deadline: { type: Date },
+    showInCalendar: { type: Boolean, default: false },
+    eventType: { type: String, trim: true },
+    lastValidationComment: { type: String, trim: true },
     viewCount: { type: Number, default: 0 },
     createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
   },
@@ -56,5 +93,6 @@ const procedureSchema = new Schema<ProcedureDocument>(
 procedureSchema.index({ title: "text", description: "text", keywords: "text" });
 procedureSchema.index({ department: 1, status: 1 });
 procedureSchema.index({ category: 1 });
+procedureSchema.index({ status: 1, targetAudience: 1 });
 
 export const ProcedureModel = model<ProcedureDocument>("Procedure", procedureSchema);

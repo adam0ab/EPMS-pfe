@@ -8,5 +8,6 @@ export const reportRouter = Router();
 
 reportRouter.use(authenticate, requireRole(Role.SUPER_ADMIN));
 
-reportRouter.get("/:type/pdf", reportController.pdf);
-reportRouter.get("/:type/excel", reportController.excel);
+reportRouter.get("/generate", reportController.generate);
+reportRouter.get("/pdf", reportController.pdf);
+reportRouter.get("/excel", reportController.excel);

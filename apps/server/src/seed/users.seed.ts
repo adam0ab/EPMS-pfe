@@ -12,6 +12,18 @@ const ADDITIONAL_EMPLOYEES = [
   { fullName: "Salma Mejri", email: "salma.mejri@esprit.tn", department: "Quality Assurance", isActive: false },
 ];
 
+const STUDENT = {
+  fullName: "Student EPMS",
+  email: "student@esprit.tn",
+  department: "Academic Affairs",
+};
+
+const VALIDATOR = {
+  fullName: "EPMS Validator",
+  email: "validator@esprit.tn",
+  department: "Quality Assurance",
+};
+
 export async function seedUsers() {
   const itDepartment = await DepartmentModel.findOne({ name: "IT Department" });
 
@@ -59,9 +71,39 @@ export async function seedUsers() {
     );
   }
 
+  const studentDepartment = await DepartmentModel.findOne({ name: STUDENT.department });
+  await UserModel.findOneAndUpdate(
+    { email: STUDENT.email },
+    {
+      fullName: STUDENT.fullName,
+      email: STUDENT.email,
+      passwordHash: employeePassword,
+      role: Role.STUDENT,
+      department: studentDepartment?._id,
+      isActive: true,
+    },
+    { upsert: true, new: true }
+  );
+
+  const validatorDepartment = await DepartmentModel.findOne({ name: VALIDATOR.department });
+  await UserModel.findOneAndUpdate(
+    { email: VALIDATOR.email },
+    {
+      fullName: VALIDATOR.fullName,
+      email: VALIDATOR.email,
+      passwordHash: employeePassword,
+      role: Role.VALIDATOR,
+      department: validatorDepartment?._id,
+      isActive: true,
+    },
+    { upsert: true, new: true }
+  );
+
   console.log("[seed] super admin: admin@esprit.tn / Admin@12345");
   console.log("[seed] employee:    employee@esprit.tn / Employee@12345");
   console.log(`[seed] ${ADDITIONAL_EMPLOYEES.length} additional sample employees ready (password: Employee@12345)`);
+  console.log("[seed] student: student@esprit.tn / Employee@12345");
+  console.log("[seed] validator: validator@esprit.tn / Employee@12345");
 
   return { superAdmin, employee };
 }

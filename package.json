@@ -14,10 +14,13 @@
     "dev:desktop": "npm run dev --workspace=@epms/desktop",
     "build:server": "npm run build --workspace=@epms/server",
     "build:desktop": "npm run build --workspace=@epms/desktop",
-    "seed": "npm run seed --workspace=@epms/server"
+    "seed": "npm run seed --workspace=@epms/server",
+    "reset-versions": "npm run reset-versions --workspace=@epms/server",
+    "migrate-procedure-audience": "npm run migrate-procedure-audience --workspace=@epms/server"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "puppeteer": "^25.10.0"
   },
   "engines": {
     "node": ">=18"

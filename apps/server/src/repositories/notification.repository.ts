@@ -1,3 +1,4 @@
+import { FilterQuery } from "mongoose";
 import { NotificationDocument, NotificationModel } from "../models/Notification.model";
 import { BaseRepository } from "./base.repository";
 
@@ -6,8 +7,8 @@ export class NotificationRepository extends BaseRepository<NotificationDocument>
     super(NotificationModel);
   }
 
-  findForUser(userId: string, limit = 20) {
-    return this.model.find({ recipient: userId }).sort({ createdAt: -1 }).limit(limit);
+  findForUser(filter: FilterQuery<NotificationDocument>, limit = 20, skip = 0) {
+    return this.model.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit);
   }
 
   markAsRead(id: string, userId: string) {

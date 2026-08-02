@@ -4,9 +4,11 @@ import { asyncHandler } from "../utils/asyncHandler";
 import { documentService } from "../services/document.service";
 import { auditService } from "../services/audit.service";
 import { ApiError } from "../utils/ApiError";
+import { procedureService } from "../services/procedure.service";
 
 export const documentController = {
   listByProcedure: asyncHandler(async (req: Request, res: Response) => {
+    await procedureService.getById(req.params.procedureId, false, req.user!.role);
     const documents = await documentService.listByProcedure(req.params.procedureId);
     res.json(documents);
   }),
@@ -28,6 +30,7 @@ export const documentController = {
 
   download: asyncHandler(async (req: Request, res: Response) => {
     const { stream, document } = await documentService.getDownloadStream(req.params.id);
+    await procedureService.getById(document.procedure.toString(), false, req.user!.role);
 
     res.setHeader("Content-Type", document.mimeType);
     res.setHeader("Content-Disposition", `attachment; filename="${encodeURIComponent(document.fileName)}"`);

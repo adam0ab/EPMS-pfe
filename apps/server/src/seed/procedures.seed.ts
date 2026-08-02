@@ -628,7 +628,8 @@ export async function seedProcedures() {
         responsiblePerson: def.responsiblePerson,
         effectiveDate: createdAt,
         lastUpdate: updatedAt,
-        versionNumber: def.versionNumber,
+        // Seed data represents the initial, unmodified publication.
+        versionNumber: "1.0",
         status: def.status,
         viewCount: randomViewCount(def.status),
         createdBy: admin._id,

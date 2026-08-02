@@ -1,4 +1,5 @@
 import { categoryRepository } from "../repositories/category.repository";
+import { procedureRepository } from "../repositories/procedure.repository";
 import { ApiError } from "../utils/ApiError";
 
 export const categoryService = {
@@ -20,6 +21,10 @@ export const categoryService = {
   },
 
   async remove(id: string) {
+    const procedureCount = await procedureRepository.countByCategoryId(id);
+    if (procedureCount > 0) {
+      throw ApiError.conflict("This category is used by existing procedures and cannot be deleted");
+    }
     const category = await categoryRepository.deleteById(id);
     if (!category) throw ApiError.notFound("Category not found");
     return category;

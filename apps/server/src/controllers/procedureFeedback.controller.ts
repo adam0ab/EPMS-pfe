@@ -1,0 +1,4 @@
+import { Request, Response } from "express";
+import { asyncHandler } from "../utils/asyncHandler";
+import { procedureFeedbackService } from "../services/procedureFeedback.service";
+export const procedureFeedbackController = { mine: asyncHandler(async (req: Request, res: Response) => res.json(await procedureFeedbackService.mine(req.user!.sub, req.params.procedureId))), save: asyncHandler(async (req: Request, res: Response) => res.json(await procedureFeedbackService.save(req.user!.sub, req.params.procedureId, req.body))), list: asyncHandler(async (req: Request, res: Response) => res.json(await procedureFeedbackService.list(req.query))), summary: asyncHandler(async (_req: Request, res: Response) => res.json(await procedureFeedbackService.summary())), status: asyncHandler(async (req: Request, res: Response) => res.json(await procedureFeedbackService.setStatus(req.params.id, req.body.status))) };

@@ -9,6 +9,10 @@ import { aiRouter } from "./ai.routes";
 import { documentRouter } from "./document.routes";
 import { notificationRouter } from "./notification.routes";
 import { reportRouter } from "./report.routes";
+import { studentChecklistRouter } from "./studentChecklist.routes";
+import { recommendationRouter } from "./recommendation.routes";
+import { studentCalendarRouter } from "./studentCalendar.routes";
+import { procedureFeedbackRouter } from "./procedureFeedback.routes";
 
 export const apiRouter = Router();
 
@@ -22,3 +26,7 @@ apiRouter.use("/ai", aiRouter);
 apiRouter.use("/documents", documentRouter);
 apiRouter.use("/notifications", notificationRouter);
 apiRouter.use("/reports", reportRouter);
+apiRouter.use("/student-checklists", studentChecklistRouter);
+apiRouter.use("/recommendations", recommendationRouter);
+apiRouter.use("/student-calendar", studentCalendarRouter);
+apiRouter.use("/procedure-feedback", procedureFeedbackRouter);

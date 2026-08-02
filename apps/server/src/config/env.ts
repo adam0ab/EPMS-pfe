@@ -14,8 +14,15 @@ export const env = {
   mongoUri: required("MONGO_URI", "mongodb://localhost:27017/epms"),
   jwtSecret: required("JWT_SECRET", "dev-secret-change-me"),
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? "8h",
-  corsOrigin: process.env.CORS_ORIGIN ?? "http://localhost:5173",
+  // Electron can send either "null" or "file://" for a packaged renderer.
+  // Keep both alongside configured browser origins.
+  corsOrigins: [...new Set([
+    ...(process.env.CORS_ORIGIN ?? "http://localhost:5173").split(",").map((origin) => origin.trim()).filter(Boolean),
+    "null",
+    "file://",
+  ])],
   aiProvider: process.env.AI_PROVIDER ?? "",
   aiApiKey: process.env.AI_API_KEY ?? "",
-  aiModel: process.env.AI_MODEL ?? "llama-3.3-70b-versatile",
+  aiModel: process.env.AI_MODEL ?? "openai/gpt-oss-20b",
+  aiBaseUrl: process.env.AI_BASE_URL ?? "https://api.groq.com/openai/v1",
 };

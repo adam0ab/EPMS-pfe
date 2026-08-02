@@ -8,13 +8,13 @@ export const aiController = {
   }),
 
   ask: asyncHandler(async (req: Request, res: Response) => {
-    const { question, procedureId } = req.body;
-    const answer = await aiService.ask(question, procedureId);
-    res.json({ answer });
+    const { question, procedureId, conversationContext } = req.body;
+    const result = await aiService.ask(question, procedureId, req.user!.role, conversationContext);
+    res.json(result);
   }),
 
   summarize: asyncHandler(async (req: Request, res: Response) => {
-    const summary = await aiService.summarize(req.params.procedureId);
+    const summary = await aiService.summarize(req.params.procedureId, req.user!.role);
     res.json({ summary });
   }),
 };

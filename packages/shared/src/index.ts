@@ -5,15 +5,28 @@
 export enum Role {
   SUPER_ADMIN = "super_admin",
   EMPLOYEE = "employee",
+  STUDENT = "student",
+  VALIDATOR = "validator",
 }
 
 export enum ProcedureStatus {
   DRAFT = "draft",
+  PENDING_REVIEW = "pending_review",
+  APPROVED = "approved",
+  REJECTED = "rejected",
   PUBLISHED = "published",
   ARCHIVED = "archived",
 }
 
+export enum ProcedureAudience {
+  STUDENT = "STUDENT",
+  EMPLOYEE = "EMPLOYEE",
+}
+
 export enum NotificationType {
+  PROCEDURE_SUBMITTED_FOR_REVIEW = "procedure_submitted_for_review",
+  PROCEDURE_APPROVED = "procedure_approved",
+  PROCEDURE_REJECTED = "procedure_rejected",
   PROCEDURE_PUBLISHED = "procedure_published",
   PROCEDURE_UPDATED = "procedure_updated",
   PROCEDURE_ARCHIVED = "procedure_archived",
@@ -27,6 +40,24 @@ export enum AuditAction {
   ARCHIVE = "archive",
   LOGIN = "login",
   DOWNLOAD = "download",
+  SUBMIT_REVIEW = "submit_review",
+  APPROVE = "approve",
+  REJECT = "reject",
+  VERSION_CREATED = "version_created",
+  VERSION_RESTORED = "version_restored",
+  VERSION_COMPARED = "version_compared",
+  VERSION_VIEWED = "version_viewed",
+}
+
+export enum ChangeType { MINOR = "minor", MAJOR = "major" }
+
+export enum ValidationAction {
+  SUBMITTED = "submitted",
+  APPROVED = "approved",
+  REJECTED = "rejected",
+  RETURNED_TO_DRAFT = "returned_to_draft",
+  PUBLISHED = "published",
+  ARCHIVED = "archived",
 }
 
 export const DEPARTMENTS = [
@@ -212,10 +243,69 @@ export interface ProcedureDTO {
   lastUpdate: string;
   versionNumber: string;
   status: ProcedureStatus;
+  targetAudience: ProcedureAudience[];
+  submittedAt?: string;
+  submittedBy?: string;
+  approvedAt?: string;
+  approvedBy?: string;
+  rejectedAt?: string;
+  rejectedBy?: string;
+  publishedAt?: string;
+  publishedBy?: string;
+  startDate?: string;
+  endDate?: string;
+  deadline?: string;
+  showInCalendar?: boolean;
+  eventType?: string;
+  lastValidationComment?: string;
   viewCount: number;
   createdBy?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export type RecommendationType = "TOP_RECOMMENDATION" | "CONTINUE" | "DEADLINE_APPROACHING" | "RELATED_TO_CHECKLIST" | "EXPLORE";
+export type RecommendationAction = "CONTINUE" | "START";
+export type RecommendationPriority = "VERY_HIGH" | "HIGH" | "MEDIUM" | "LOW";
+
+export interface StudentRecommendationDTO {
+  procedure: ProcedureDTO;
+  type: RecommendationType;
+  priority: RecommendationPriority;
+  reasons: string[];
+  checklist?: {
+    completedCount: number;
+    totalCount: number;
+    progressPercent: number;
+    isComplete: boolean;
+  };
+}
+
+export interface StudentRecommendationsDTO {
+  nextBestAction?: StudentRecommendationDTO & { action: RecommendationAction };
+  sections: {
+    recommendedForYou: StudentRecommendationDTO[];
+    deadlineApproaching: StudentRecommendationDTO[];
+    continue: StudentRecommendationDTO[];
+    relatedToChecklist: StudentRecommendationDTO[];
+    explore: StudentRecommendationDTO[];
+  };
+}
+
+export interface ProcedureVersionDTO {
+  _id: string; procedureId: string; versionNumber: string; title: string; description: string;
+  department: DepartmentDTO | string; category: CategoryDTO | string; steps: ProcedureStep[];
+  keywords: string[]; requiredDocuments: string[]; status: ProcedureStatus; createdBy: UserDTO | string;
+  changeType: ChangeType; changeDescription: string; createdAt: string;
+}
+
+export interface ValidationHistoryDTO {
+  _id: string;
+  procedureId: string;
+  action: ValidationAction;
+  actor: { _id: string; fullName: string; email: string; role: Role } | string;
+  comment?: string;
+  createdAt: string;
 }
 
 export interface DocumentMetaDTO {

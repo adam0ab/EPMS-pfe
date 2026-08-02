@@ -7,7 +7,10 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
-    "seed": "tsx src/seed/index.ts"
+    "seed": "tsx src/seed/index.ts",
+    "repair-users": "tsx src/seed/repairUsers.ts",
+    "migrate-procedure-audience": "tsx src/seed/migrateProcedureAudience.ts",
+    "reset-versions": "tsx src/seed/resetVersions.ts"
   },
   "dependencies": {
     "@epms/shared": "1.0.0",

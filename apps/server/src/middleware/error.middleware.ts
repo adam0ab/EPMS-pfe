@@ -7,7 +7,7 @@ export function notFoundHandler(req: Request, res: Response) {
 
 export function errorHandler(err: unknown, _req: Request, res: Response, _next: NextFunction) {
   if (err instanceof ApiError) {
-    return res.status(err.statusCode).json({ message: err.message, details: err.details });
+    return res.status(err.statusCode).json({ message: err.message, ...(err.code ? { code: err.code } : {}), ...(err.details !== undefined ? { details: err.details } : {}) });
   }
 
   if (err instanceof Error && err.name === "ValidationError") {

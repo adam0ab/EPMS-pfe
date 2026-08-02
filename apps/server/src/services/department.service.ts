@@ -29,6 +29,10 @@ export const departmentService = {
   },
 
   async remove(id: string) {
+    const procedureCount = await procedureRepository.countByDepartmentId(id);
+    if (procedureCount > 0) {
+      throw ApiError.conflict("This department is used by existing procedures and cannot be deleted");
+    }
     const department = await departmentRepository.deleteById(id);
     if (!department) throw ApiError.notFound("Department not found");
     return department;
