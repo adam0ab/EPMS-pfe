@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SearchBar } from "../ui/SearchBar";
 import { useThemeStore } from "../../store/theme.store";
 import { useAuthStore } from "../../store/auth.store";
@@ -11,6 +11,18 @@ export function Topbar() {
   const { theme, toggleTheme } = useThemeStore();
   const { user, logout } = useAuthStore();
   const [search, setSearch] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        searchRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   function handleSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === "Enter" && search.trim()) {
@@ -21,8 +33,9 @@ export function Topbar() {
   return (
     <header className="flex h-16 items-center justify-between border-b border-slate-200/70 bg-surface-card px-6 dark:border-surface-dark-border dark:bg-surface-dark-card">
       <SearchBar
+        ref={searchRef}
         placeholder="Search procedures, departments, categories…"
-        className="w-full max-w-md"
+        className="w-full max-w-xl"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         onKeyDown={handleSearchKeyDown}

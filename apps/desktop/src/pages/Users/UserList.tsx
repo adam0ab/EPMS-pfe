@@ -47,7 +47,7 @@ export default function UserList() {
         <div>
           <h1 className="text-2xl font-bold text-secondary dark:text-white">Users</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Manage Super Admin and Employee accounts.
+            Manage Super Admin, Employee, Student and Validator accounts.
           </p>
         </div>
         <Button onClick={openCreate}>+ New User</Button>
@@ -118,6 +118,8 @@ export default function UserList() {
           <div className="grid grid-cols-2 gap-4">
             <Select label="Role" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value as Role })}>
               <option value={Role.EMPLOYEE}>Employee</option>
+              <option value={Role.STUDENT}>Student</option>
+              <option value={Role.VALIDATOR}>Validator</option>
               <option value={Role.SUPER_ADMIN}>Super Admin</option>
             </Select>
             <Select

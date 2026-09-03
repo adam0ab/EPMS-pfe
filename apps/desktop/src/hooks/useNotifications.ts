@@ -1,11 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { notificationsApi } from "../api/notifications.api";
+import { NotificationFilters, notificationsApi } from "../api/notifications.api";
+import { useAuthStore } from "../store/auth.store";
 
-export function useNotifications() {
+export function useNotifications(limit = 20, page = 1, filters: NotificationFilters = {}) {
+  const userId = useAuthStore((state) => state.user?._id);
+
   return useQuery({
-    queryKey: ["notifications"],
-    queryFn: () => notificationsApi.list(20),
+    queryKey: ["notifications", userId, limit, page, filters],
+    queryFn: () => notificationsApi.list(limit, page, filters),
+    enabled: Boolean(userId),
+    refetchOnMount: "always",
     refetchInterval: 30_000,
+    refetchIntervalInBackground: false,
   });
 }
 

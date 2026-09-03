@@ -1,0 +1,17 @@
+import { useState } from "react";
+import { ChangeType, ProcedureDTO, Role } from "@epms/shared";
+import { Card } from "../ui/Card";
+import { Button } from "../ui/Button";
+import { useProcedureVersions, useRestoreProcedureVersion } from "../../hooks/useProcedures";
+import { LinkifiedText } from "../ui/LinkifiedText";
+
+function authorName(createdBy: string | { fullName: string }) { return typeof createdBy === "string" ? "Unknown user" : createdBy.fullName; }
+function changeLabel(changeType: ChangeType) { return changeType === ChangeType.MAJOR ? "Major change" : "Minor change"; }
+
+export function VersionHistory({ procedure, role }: { procedure: ProcedureDTO; role?: Role }) {
+  const { data: versions, isLoading, isError } = useProcedureVersions(procedure._id); const restore = useRestoreProcedureVersion(); const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selected = versions?.find((version) => version._id === selectedId) ?? versions?.[0];
+  return <Card className="p-5"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Versioning</p><h2 className="mt-1 text-lg font-semibold text-secondary dark:text-white">Published version history</h2>
+    {isLoading ? <p className="mt-4 text-sm text-slate-400">Loading…</p> : isError ? <p role="alert" className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">Unable to load versions.</p> : !versions?.length ? <p className="mt-4 text-sm text-slate-400">Current version: v{procedure.versionNumber}. No published snapshot is available.</p> : <div className="mt-5 grid gap-4 md:grid-cols-3"><div className="space-y-2">{versions.map((version, index) => <Button key={version._id} variant={selected?._id === version._id ? "secondary" : "ghost"} className="w-full justify-between" onClick={() => setSelectedId(version._id)}><span>v{version.versionNumber}</span>{index === 0 && <span className="text-xs">Current</span>}</Button>)}</div><div className="rounded-lg bg-slate-50 p-4 text-sm dark:bg-slate-800 md:col-span-2"><div className="flex flex-wrap items-center justify-between gap-2"><p className="font-semibold text-secondary dark:text-white">Version v{selected?.versionNumber}</p>{selected && <span className="rounded-full bg-white px-2 py-1 text-xs text-slate-500 dark:bg-slate-700">{changeLabel(selected.changeType)}</span>}</div><p className="mt-2 text-slate-600 dark:text-slate-300">{selected?.changeDescription}</p><p className="mt-3 text-xs text-slate-400">Published {selected && new Date(selected.createdAt).toLocaleString("fr-FR")} · {selected && authorName(selected.createdBy)}</p><h3 className="mt-4 font-medium text-secondary dark:text-white">Steps at this version</h3><ol className="mt-2 list-decimal space-y-1 pl-5 text-slate-600 dark:text-slate-300">{selected?.steps.map((step) => <li key={step.order}><LinkifiedText text={step.description} /></li>)}</ol><h3 className="mt-4 font-medium text-secondary dark:text-white">Required documents</h3><p className="mt-1 text-slate-600 dark:text-slate-300">{selected?.requiredDocuments.join(", ") || "None"}</p>{role === Role.SUPER_ADMIN && selected && <Button className="mt-4" size="sm" variant="ghost" disabled={restore.isPending} onClick={() => { if (confirm(`Restore version ${selected.versionNumber} as a draft?`)) restore.mutate({ id: procedure._id, versionId: selected._id }); }}>{restore.isPending ? "Restoring…" : "Restore this version"}</Button>}</div></div>}
+  </Card>;
+}

@@ -1,10 +1,10 @@
-import { InputHTMLAttributes } from "react";
+import { forwardRef, InputHTMLAttributes } from "react";
 import clsx from "clsx";
 
-export function SearchBar({
+export const SearchBar = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(function SearchBar({
   className,
   ...props
-}: InputHTMLAttributes<HTMLInputElement>) {
+}, ref) {
   return (
     <div className={clsx("relative", className)}>
       <svg
@@ -21,6 +21,7 @@ export function SearchBar({
         />
       </svg>
       <input
+        ref={ref}
         type="text"
         className={clsx(
           "w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-secondary",
@@ -31,4 +32,4 @@ export function SearchBar({
       />
     </div>
   );
-}
+});

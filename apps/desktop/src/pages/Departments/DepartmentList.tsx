@@ -1,112 +1,38 @@
-import { FormEvent, useState } from "react";
-import { DepartmentDTO } from "@epms/shared";
-import {
-  useCreateDepartment,
-  useDeleteDepartment,
-  useDepartments,
-  useUpdateDepartment,
-} from "../../hooks/useDepartments";
-import { DataTable } from "../../components/ui/DataTable";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { DepartmentDTO, ProcedureStatus } from "@epms/shared";
+import { useCreateDepartment, useDeleteDepartment, useDepartments, useUpdateDepartment } from "../../hooks/useDepartments";
+import { useProcedures } from "../../hooks/useProcedures";
 import { Button } from "../../components/ui/Button";
 import { Modal } from "../../components/ui/Modal";
-import { TextArea, TextInput } from "../../components/ui/Field";
+import { TextArea, TextInput, Select } from "../../components/ui/Field";
+import { SearchBar } from "../../components/ui/SearchBar";
+import { StatusBadge } from "../../components/ui/Badge";
+
+const initials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((word) => word[0]).join("").toUpperCase();
 
 export default function DepartmentList() {
-  const { data, isLoading } = useDepartments();
-  const createDepartment = useCreateDepartment();
-  const updateDepartment = useUpdateDepartment();
-  const deleteDepartment = useDeleteDepartment();
-
-  const [editing, setEditing] = useState<DepartmentDTO | null>(null);
-  const [isModalOpen, setModalOpen] = useState(false);
-  const [form, setForm] = useState({ name: "", description: "" });
-
-  function openCreate() {
-    setEditing(null);
-    setForm({ name: "", description: "" });
-    setModalOpen(true);
-  }
-
-  function openEdit(department: DepartmentDTO) {
-    setEditing(department);
-    setForm({ name: department.name, description: department.description ?? "" });
-    setModalOpen(true);
-  }
-
-  function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    const onSuccess = () => setModalOpen(false);
-    if (editing) {
-      updateDepartment.mutate({ id: editing._id, data: form }, { onSuccess });
-    } else {
-      createDepartment.mutate(form, { onSuccess });
-    }
-  }
-
-  return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-secondary dark:text-white">Departments</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Manage the institutional departments procedures belong to.
-          </p>
-        </div>
-        <Button onClick={openCreate}>+ New Department</Button>
-      </div>
-
-      <DataTable
-        rows={data ?? []}
-        rowKey={(row) => row._id}
-        isLoading={isLoading}
-        columns={[
-          { header: "Name", cell: (row) => <span className="font-medium">{row.name}</span> },
-          { header: "Description", cell: (row) => row.description || "—" },
-          { header: "Procedures", cell: (row) => row.procedureCount ?? 0 },
-          {
-            header: "",
-            cell: (row) => (
-              <div className="flex justify-end gap-2">
-                <Button variant="ghost" size="sm" onClick={() => openEdit(row)}>
-                  Edit
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-danger"
-                  onClick={() => {
-                    if (confirm(`Delete department "${row.name}"?`)) deleteDepartment.mutate(row._id);
-                  }}
-                >
-                  Delete
-                </Button>
-              </div>
-            ),
-          },
-        ]}
-      />
-
-      <Modal open={isModalOpen} onClose={() => setModalOpen(false)} title={editing ? "Edit Department" : "New Department"}>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <TextInput
-            label="Name"
-            required
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-          />
-          <TextArea
-            label="Description"
-            value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-          />
-          <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="ghost" onClick={() => setModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit">{editing ? "Save Changes" : "Create Department"}</Button>
-          </div>
-        </form>
-      </Modal>
-    </div>
-  );
+  const navigate = useNavigate(); const { data = [], isLoading, isError, refetch } = useDepartments(); const { data: procedureData, isLoading: proceduresLoading } = useProcedures({ pageSize: 100 });
+  const createDepartment = useCreateDepartment(); const updateDepartment = useUpdateDepartment(); const deleteDepartment = useDeleteDepartment();
+  const [search, setSearch] = useState(""); const [usage, setUsage] = useState("all"); const [sort, setSort] = useState("name-asc"); const [selectedId, setSelectedId] = useState<string | null>(null); const [menuOpen, setMenuOpen] = useState(false); const [editing, setEditing] = useState<DepartmentDTO | null>(null); const [isModalOpen, setModalOpen] = useState(false); const [form, setForm] = useState({ name: "", description: "" });
+  const totalProcedures = data.reduce((sum, item) => sum + (item.procedureCount ?? 0), 0); const used = data.filter((item) => (item.procedureCount ?? 0) > 0).length;
+  const rows = useMemo(() => data.filter((item) => { const term = search.trim().toLowerCase(); const count = item.procedureCount ?? 0; return (!term || item.name.toLowerCase().includes(term) || item.description?.toLowerCase().includes(term)) && (usage === "all" || usage === "with" && count > 0 || usage === "without" && count === 0); }).sort((a, b) => { const left = a.procedureCount ?? 0; const right = b.procedureCount ?? 0; if (sort === "name-desc") return b.name.localeCompare(a.name); if (sort === "most") return right - left || a.name.localeCompare(b.name); if (sort === "least") return left - right || a.name.localeCompare(b.name); return a.name.localeCompare(b.name); }), [data, search, usage, sort]);
+  useEffect(() => { if (!rows.some((item) => item._id === selectedId)) setSelectedId(rows[0]?._id ?? null); }, [rows, selectedId]);
+  const selected = rows.find((item) => item._id === selectedId) ?? null;
+  const procedures = useMemo(() => (procedureData?.items ?? []).filter((procedure) => (typeof procedure.department === "object" ? procedure.department._id : procedure.department) === selectedId).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()), [procedureData?.items, selectedId]);
+  const published = procedures.filter((procedure) => procedure.status === ProcedureStatus.PUBLISHED).length;
+  const openCreate = () => { setEditing(null); setForm({ name: "", description: "" }); setModalOpen(true); };
+  const openEdit = () => { if (!selected) return; setEditing(selected); setForm({ name: selected.name, description: selected.description ?? "" }); setModalOpen(true); setMenuOpen(false); };
+  const submit = (event: FormEvent) => { event.preventDefault(); const success = () => setModalOpen(false); editing ? updateDepartment.mutate({ id: editing._id, data: form }, { onSuccess: success }) : createDepartment.mutate(form, { onSuccess: success }); };
+  const deleteSelected = () => { if (selected && confirm(`Delete department "${selected.name}"?`)) deleteDepartment.mutate(selected._id); setMenuOpen(false); };
+  const viewSelected = () => selected && navigate(`/procedures?department=${selected._id}`);
+  return <div className="mx-auto max-w-7xl space-y-5 page-enter"><header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="text-sm font-semibold text-primary">Administration / Organization</p><h1 className="mt-1 text-3xl font-bold tracking-tight text-secondary dark:text-white">Department Management</h1><p className="mt-2 max-w-2xl text-slate-500">Manage institutional structure, procedure ownership and administrative coverage across EPMS.</p></div><Button onClick={openCreate}>+ New Department</Button></header><div className="flex flex-wrap gap-x-5 gap-y-1 border-y border-slate-200 py-3 text-sm dark:border-slate-800"><span><b>{data.length}</b> departments</span><span><b>{totalProcedures}</b> procedures</span><span><b>{used}</b> with procedures</span><span><b>{data.length - used}</b> empty</span></div><div className="flex flex-col gap-2 sm:flex-row"><SearchBar className="sm:flex-1" aria-label="Search departments" placeholder="Search departments..." value={search} onChange={(event) => setSearch(event.target.value)} /><Select className="sm:w-48" label="" value={usage} onChange={(event) => setUsage(event.target.value)}><option value="all">All departments</option><option value="with">With procedures</option><option value="without">Without procedures</option></Select><Select className="sm:w-48" label="" value={sort} onChange={(event) => setSort(event.target.value)}><option value="name-asc">Name A → Z</option><option value="name-desc">Name Z → A</option><option value="most">Most procedures</option><option value="least">Least procedures</option></Select></div>
+    {isLoading ? <Skeleton /> : isError ? <Empty title="Unable to load departments" detail="Something went wrong while loading the department directory." action="Retry" onClick={() => refetch()} /> : !data.length ? <Empty title="No departments have been created yet" detail="Create the first institutional department to organize procedures." action="+ New Department" onClick={openCreate} /> : <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"><div className="border-b border-slate-200 px-4 py-3 dark:border-slate-800"><h2 className="font-semibold text-secondary dark:text-white">Department Directory</h2><p className="mt-1 text-xs text-slate-500">{rows.length} {rows.length === 1 ? "department" : "departments"}{search || usage !== "all" ? " found" : ""}</p></div>{!rows.length ? <div className="p-6 text-center text-sm text-slate-500">No departments match your search or filter.</div> : rows.map((department, index) => { const expanded = department._id === selectedId; return <div key={department._id} className="border-b border-slate-100 last:border-0 dark:border-slate-800"><button type="button" aria-expanded={expanded} onClick={() => { setSelectedId(department._id); setMenuOpen(false); }} className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40 ${expanded ? "bg-primary-50/60 dark:bg-primary/10" : "hover:bg-slate-50 dark:hover:bg-slate-800/40"}`}><span className="w-5 text-xs tabular-nums text-slate-400">{String(index + 1).padStart(2, "0")}</span><span className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-slate-100 text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">{initials(department.name)}</span><span className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold text-secondary dark:text-white">{department.name}</span><span className="block truncate text-xs text-slate-500">{department.description || "No description provided"}</span></span><span className={`text-sm font-semibold ${department.procedureCount ? "text-primary" : "text-slate-400"}`}>{department.procedureCount ?? 0}</span><span className="text-slate-400">{expanded ? "−" : "+"}</span></button>{expanded && <div className="mx-3 mb-3 rounded-lg border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-700 dark:bg-slate-800/30"><DepartmentDetail department={department} procedures={procedures} loading={proceduresLoading} published={published} onEdit={openEdit} onView={viewSelected} menuOpen={menuOpen} setMenuOpen={setMenuOpen} onDelete={deleteSelected} deleting={deleteDepartment.isPending} /></div>}</div>; })}</div>}
+    <Modal open={isModalOpen} onClose={() => setModalOpen(false)} title={editing ? "Edit Department" : "New Department"}><form onSubmit={submit} className="space-y-4"><TextInput label="Department Name *" required value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} /><TextArea label="Description" value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /><div className="flex justify-end gap-3 pt-2"><Button type="button" variant="ghost" onClick={() => setModalOpen(false)}>Cancel</Button><Button type="submit" disabled={createDepartment.isPending || updateDepartment.isPending}>{editing ? "Save Department" : "Create Department"}</Button></div></form></Modal></div>;
 }
+
+function DepartmentDetail({ department, procedures, loading, published, onEdit, onView, menuOpen, setMenuOpen, onDelete, deleting }: { department: DepartmentDTO; procedures: any[]; loading: boolean; published: number; onEdit: () => void; onView: () => void; menuOpen: boolean; setMenuOpen: (value: boolean) => void; onDelete: () => void; deleting: boolean }) { const total = procedures.length; const other = total - published; return <div className="space-y-4"><div className="flex flex-col justify-between gap-3 sm:flex-row"><div><p className="text-xs font-semibold uppercase tracking-[.14em] text-primary">Department overview</p><h2 className="mt-1 text-xl font-bold text-secondary dark:text-white">{department.name}</h2></div><div className="flex gap-2"><Button size="sm" onClick={onEdit}>Edit Department</Button><div className="relative"><Button size="sm" variant="ghost" onClick={() => setMenuOpen(!menuOpen)}>⋮</Button>{menuOpen && <div className="absolute right-0 z-20 mt-1 w-40 rounded-lg border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-900"><button className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-800" onClick={onView}>View procedures</button><button disabled={deleting} className="w-full px-3 py-2 text-left text-sm text-danger hover:bg-red-50 dark:hover:bg-red-500/10" onClick={onDelete}>Delete</button></div>}</div></div></div><div className="flex divide-x divide-slate-200 border-y border-slate-200 dark:divide-slate-700 dark:border-slate-700"><Metric value={department.procedureCount ?? total} label="Procedures" /><Metric value={published} label="Published" /><Metric value={other} label="Other" /></div>{loading ? <div className="h-16 animate-pulse bg-slate-100 dark:bg-slate-800" /> : total ? <section><h3 className="text-sm font-semibold text-secondary dark:text-white">Procedure Coverage</h3><div className="mt-2 space-y-2"><Coverage label="Published" value={published} total={total} color="bg-primary" /><Coverage label="Other" value={other} total={total} color="bg-slate-400" /></div></section> : <p className="text-sm text-slate-500">No procedures are currently assigned to this department.</p>}<section><div className="flex justify-between"><h3 className="text-sm font-semibold text-secondary dark:text-white">Procedures</h3><Button size="sm" variant="ghost" onClick={onView}>View all</Button></div>{loading ? <div className="mt-2 h-12 animate-pulse bg-slate-100 dark:bg-slate-800" /> : !procedures.length ? <p className="mt-2 text-sm text-slate-500">This department currently has no procedures in EPMS.</p> : <div className="mt-2 divide-y divide-slate-200 border-y border-slate-200 dark:divide-slate-700 dark:border-slate-700">{procedures.slice(0, 5).map((procedure) => <button key={procedure._id} onClick={onView} className="flex w-full items-center justify-between gap-3 py-2.5 text-left hover:bg-white dark:hover:bg-slate-800"><span className="truncate text-sm font-medium text-secondary dark:text-white">{procedure.title}</span><StatusBadge status={procedure.status} /></button>)}</div>}</section></div>; }
+function Metric({ value, label }: { value: number; label: string }) { return <div className="flex-1 px-3 py-2"><p className="text-lg font-bold text-secondary dark:text-white">{value}</p><p className="text-xs text-slate-500">{label}</p></div>; }
+function Coverage({ label, value, total, color }: { label: string; value: number; total: number; color: string }) { return <div className="flex items-center gap-3"><span className="w-16 text-xs text-slate-500">{label}</span><div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700"><div className={`h-full ${color}`} style={{ width: `${value / total * 100}%` }} /></div><span className="text-xs font-semibold">{value}</span></div>; }
+function Empty({ title, detail, action, onClick }: { title: string; detail: string; action: string; onClick: () => void }) { return <div className="rounded-lg border border-slate-200 px-6 py-10 text-center dark:border-slate-800"><h2 className="font-semibold text-secondary dark:text-white">{title}</h2><p className="mt-2 text-sm text-slate-500">{detail}</p><Button className="mt-5" variant="ghost" onClick={onClick}>{action}</Button></div>; }
+function Skeleton() { return <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800">{[1, 2, 3, 4, 5, 6].map((item) => <div key={item} className="h-[68px] animate-pulse border-b border-slate-100 bg-slate-50 last:border-0 dark:border-slate-800 dark:bg-slate-900" />)}</div>; }

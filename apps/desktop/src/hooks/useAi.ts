@@ -7,8 +7,8 @@ export function useAiStatus() {
 
 export function useAskAi() {
   return useMutation({
-    mutationFn: ({ question, procedureId }: { question: string; procedureId?: string }) =>
-      aiApi.ask(question, procedureId),
+    mutationFn: ({ question, procedureId, conversationContext }: { question: string; procedureId?: string; conversationContext?: string }) =>
+      aiApi.ask(question, procedureId, conversationContext),
   });
 }
 

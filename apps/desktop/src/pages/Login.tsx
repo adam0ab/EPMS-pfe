@@ -4,6 +4,13 @@ import { useLogin } from "../hooks/useAuth";
 import { Button } from "../components/ui/Button";
 import { TextInput } from "../components/ui/Field";
 
+function loginErrorMessage(error: unknown) {
+  const response = (error as { response?: { status?: number; data?: { message?: string } } } | undefined)?.response;
+  if (response?.status === 401) return "Invalid email or password.";
+  if (response?.data?.message) return response.data.message;
+  return "Unable to reach the EPMS server. Ensure the server is running on http://localhost:4000.";
+}
+
 export default function Login() {
   const navigate = useNavigate();
   const login = useLogin();
@@ -51,7 +58,7 @@ export default function Login() {
 
           {login.isError && (
             <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-danger dark:bg-red-500/10">
-              Invalid email or password.
+              {loginErrorMessage(login.error)}
             </p>
           )}
 

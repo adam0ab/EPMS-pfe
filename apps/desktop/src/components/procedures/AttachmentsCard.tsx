@@ -4,73 +4,15 @@ import { Button } from "../ui/Button";
 import { documentsApi } from "../../api/documents.api";
 import { useDeleteDocument, useProcedureDocuments, useUploadDocument } from "../../hooks/useDocuments";
 
-function formatBytes(bytes: number) {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
+function formatBytes(bytes: number) { return bytes < 1024 ? `${bytes} B` : bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(1)} KB` : `${(bytes / (1024 * 1024)).toFixed(1)} MB`; }
+function fileIcon(type: string) { if (type.includes("pdf")) return "PDF"; if (type.includes("word")) return "DOC"; if (type.includes("sheet") || type.includes("excel")) return "XLS"; if (type.startsWith("image/")) return "IMG"; return "FILE"; }
 
 export function AttachmentsCard({ procedureId, isAdmin }: { procedureId: string; isAdmin: boolean }) {
-  const { data: documents, isLoading } = useProcedureDocuments(procedureId);
-  const uploadDocument = useUploadDocument(procedureId);
-  const deleteDocument = useDeleteDocument(procedureId);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (file) uploadDocument.mutate(file);
-    e.target.value = "";
-  }
-
-  return (
-    <Card className="p-5">
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-secondary dark:text-white">Attachments</h2>
-        {isAdmin && (
-          <>
-            <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileChange} accept=".pdf,.doc,.docx,.xls,.xlsx,image/*" />
-            <Button variant="ghost" size="sm" onClick={() => fileInputRef.current?.click()} disabled={uploadDocument.isPending}>
-              {uploadDocument.isPending ? "Uploading…" : "+ Upload"}
-            </Button>
-          </>
-        )}
-      </div>
-
-      <ul className="space-y-2 text-sm">
-        {isLoading && <p className="text-slate-400">Loading…</p>}
-        {!isLoading && (documents ?? []).length === 0 && <p className="text-slate-400">No files uploaded.</p>}
-        {documents?.map((doc) => (
-          <li
-            key={doc._id}
-            className="flex items-center justify-between rounded-lg border border-slate-100 px-3 py-2 dark:border-surface-dark-border"
-          >
-            <div className="min-w-0 flex-1">
-              <p className="truncate font-medium text-secondary dark:text-white">{doc.fileName}</p>
-              <p className="text-xs text-slate-400">{formatBytes(doc.sizeBytes)}</p>
-            </div>
-            <div className="flex shrink-0 gap-1">
-              <Button variant="ghost" size="sm" onClick={() => documentsApi.download(doc._id, doc.fileName)}>
-                Download
-              </Button>
-              {isAdmin && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-danger"
-                  onClick={() => {
-                    if (confirm(`Delete "${doc.fileName}"?`)) deleteDocument.mutate(doc._id);
-                  }}
-                >
-                  Delete
-                </Button>
-              )}
-            </div>
-          </li>
-        ))}
-      </ul>
-      {uploadDocument.isError && (
-        <p className="mt-2 text-xs text-danger">Upload failed. Allowed: PDF, DOCX, XLSX, images (max 20MB).</p>
-      )}
-    </Card>
-  );
+  const { data: documents, isLoading, isError } = useProcedureDocuments(procedureId);
+  const uploadDocument = useUploadDocument(procedureId); const deleteDocument = useDeleteDocument(procedureId); const fileInputRef = useRef<HTMLInputElement>(null);
+  function handleFileChange(event: ChangeEvent<HTMLInputElement>) { const file = event.target.files?.[0]; if (file) uploadDocument.mutate(file); event.target.value = ""; }
+  return <Card className="p-5"><div className="flex items-center justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Attachments</p><h2 className="mt-1 text-lg font-semibold text-secondary dark:text-white">Documents</h2></div>{isAdmin && <><input ref={fileInputRef} type="file" className="hidden" onChange={handleFileChange} accept=".pdf,.doc,.docx,.xls,.xlsx,image/*" /><Button variant="ghost" size="sm" onClick={() => fileInputRef.current?.click()} disabled={uploadDocument.isPending}>{uploadDocument.isPending ? "Uploading…" : "+ Upload"}</Button></>}</div>
+    {isLoading ? <div className="mt-5 space-y-3">{[1, 2].map((key) => <div key={key} className="h-14 animate-pulse rounded-lg bg-slate-100 dark:bg-slate-800" />)}</div> : isError ? <p role="alert" className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">Unable to load documents.</p> : !documents?.length ? <div className="mt-5 rounded-xl border border-dashed border-slate-200 px-4 py-8 text-center dark:border-slate-700"><p className="font-medium text-slate-600 dark:text-slate-300">No document is attached to this procedure.</p><p className="mt-1 text-sm text-slate-400">Published documents will appear here.</p></div> : <ul className="mt-5 divide-y divide-slate-100 dark:divide-slate-800">{documents.map((doc) => <li key={doc._id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-50 text-[10px] font-bold text-primary dark:bg-primary/10">{fileIcon(doc.mimeType)}</span><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-secondary dark:text-white">{doc.fileName}</p><p className="mt-0.5 text-xs text-slate-400">{doc.mimeType} · {formatBytes(doc.sizeBytes)} · {new Date(doc.createdAt).toLocaleDateString("fr-FR")}</p></div><div className="flex shrink-0 gap-1"><Button aria-label={`View ${doc.fileName}`} variant="ghost" size="sm" onClick={() => documentsApi.view(doc._id)}>View</Button><Button aria-label={`Download ${doc.fileName}`} variant="ghost" size="sm" onClick={() => documentsApi.download(doc._id, doc.fileName)}>Download</Button>{isAdmin && <Button aria-label={`Delete ${doc.fileName}`} variant="ghost" size="sm" className="text-danger" onClick={() => { if (confirm(`Delete “${doc.fileName}”?`)) deleteDocument.mutate(doc._id); }}>Delete</Button>}</div></li>)}</ul>}
+    {uploadDocument.isError && <p role="alert" className="mt-3 text-xs text-danger">Upload failed. Accepted formats: PDF, Word, Excel and images (20 MB maximum).</p>}
+  </Card>;
 }

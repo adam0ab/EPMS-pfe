@@ -10,8 +10,11 @@
   }
 
   body {
-    @apply bg-surface text-secondary dark:bg-surface-dark dark:text-slate-100 font-sans antialiased;
+    @apply bg-slate-50 text-secondary dark:bg-[#0B1120] dark:text-slate-100 font-sans antialiased;
+    background-image: radial-gradient(circle at 10% 0%, rgba(227, 6, 19, 0.05), transparent 28%);
   }
+
+  ::selection { @apply bg-primary/20 text-secondary dark:text-white; }
 }
 
 @layer utilities {
@@ -21,4 +24,8 @@
   .scrollbar-thin::-webkit-scrollbar-thumb {
     @apply bg-slate-300 dark:bg-slate-600 rounded-full;
   }
+  .page-enter { animation: page-enter 180ms ease-out both; }
+  .focus-ring { @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#0B1120]; }
 }
+
+@keyframes page-enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
