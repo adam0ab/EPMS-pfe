@@ -6,6 +6,20 @@ and more.
 
 ## Tech Stack
 
+## Current capabilities
+
+- Role-based workspaces for Super Admin, Validator, Employee and Student
+- Procedure CRUD, validation workflow, publishing, archiving, lifecycle timeline and versions
+- Audience-based Student/Employee procedure visibility
+- Student checklist, needs-attention dashboard, personal calendar and recommendations
+- Notifications, documents, reports, procedure health, dashboards and administrative copilot
+- Persisted Student Procedure Feedback and an Admin Feedback & Quality center
+
+## Procedure lifecycle
+
+Draft → Submitted for review → Approved or Rejected → Published → Revision or Archived.
+Feedback informs a human-led revision; it never bypasses the validation workflow.
+
 - **Frontend**: Electron, React, TypeScript, Tailwind CSS, Zustand, React Router, React Query, Recharts
 - **Backend**: Node.js, Express.js, JWT auth, bcrypt, Multer + MongoDB GridFS, PDFKit, ExcelJS
 - **Database**: MongoDB, Mongoose
