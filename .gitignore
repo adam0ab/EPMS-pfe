@@ -11,3 +11,6 @@ Thumbs.db
 coverage/
 .vite/
 NUL
+deploy/.env
+infra/jenkins_home/
+.vagrant/

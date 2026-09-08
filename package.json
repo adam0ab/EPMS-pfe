@@ -20,7 +20,8 @@
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
-    "puppeteer": "^25.10.0"
+    "puppeteer": "^25.10.0",
+    "vite": "^8.2.2"
   },
   "engines": {
     "node": ">=18"

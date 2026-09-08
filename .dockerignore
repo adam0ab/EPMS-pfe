@@ -1,0 +1,10 @@
+node_modules
+**/node_modules
+**/dist
+**/dist-electron
+.git
+.env
+**/.env
+release
+coverage
+EPMS_ADAM_GUIDE_REVISION_SOUTENANCE.pdf
