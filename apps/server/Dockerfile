@@ -19,4 +19,5 @@ COPY --chown=nonroot:nonroot --from=build /app/packages/shared/dist packages/sha
 COPY --chown=nonroot:nonroot --from=build /app/apps/server/package.json apps/server/package.json
 COPY --chown=nonroot:nonroot --from=build /app/apps/server/dist apps/server/dist
 EXPOSE 4000
+USER nonroot
 CMD ["apps/server/dist/index.js"]
